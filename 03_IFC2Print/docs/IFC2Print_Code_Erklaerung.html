@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IFC2Print Code-Atlas</title>
+<style>
+:root{--bg:#f3f1ec;--card:#fffdf9;--ink:#1c1f23;--muted:#565d65;--line:#d8d2c7;
+  --accent:#b4531f;--accent-soft:#f4e2d6;--blue:#2c5d8a;--blue-soft:#dde8f2;--ok:#2f6f4e;--warn:#8a5a00;--bad:#a3322b;
+  --code:#f0ece4;--shadow:0 20px 50px -20px rgba(30,30,30,.25)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181b;--card:#1e2226;--ink:#eceae6;--muted:#a7aeb5;--line:#353b41;
+  --accent:#f0915a;--accent-soft:#3a2a20;--blue:#86b6e0;--blue-soft:#1f2e3b;--ok:#7cc79c;--warn:#e0b45a;--bad:#f08a80;--code:#191c1f}}
+:root[data-theme=dark]{--bg:#15181b;--card:#1e2226;--ink:#eceae6;--muted:#a7aeb5;--line:#353b41;
+  --accent:#f0915a;--accent-soft:#3a2a20;--blue:#86b6e0;--blue-soft:#1f2e3b;--ok:#7cc79c;--warn:#e0b45a;--bad:#f08a80;--code:#191c1f}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:6px}
+code,pre{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;font-size:.86em}
+code{background:var(--code);padding:1px 6px;border-radius:6px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:14px;padding:14px 16px;overflow-x:auto;line-height:1.5;margin:10px 0}
+pre .c{color:var(--muted)} pre .k{color:var(--accent);font-weight:600} pre .s{color:var(--ok)}
+.bar{position:fixed;inset:0 0 auto;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px 20px;backdrop-filter:blur(10px);background:color-mix(in srgb,var(--bg) 75%,transparent);border-bottom:1px solid color-mix(in srgb,var(--line) 50%,transparent)}
+.bar .t{font-size:.78rem;text-transform:uppercase;letter-spacing:.16em;font-weight:700}
+.bar .btns{display:flex;gap:6px}
+.btn{min-height:44px;min-width:44px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:.9rem;cursor:pointer;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px);background:var(--accent-soft)}
+.btn kbd{font-size:.72rem;color:var(--muted);margin-left:6px}
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:60;width:0}
+.hero{min-height:100vh;display:grid;place-items:center;text-align:center;position:relative;overflow:hidden;padding:0 20px}
+.hero h1{font-size:clamp(2.6rem,8vw,6rem);line-height:1;font-weight:800;letter-spacing:-.03em;margin:0 0 18px}
+.hero p{max-width:640px;margin:0 auto;color:var(--muted);font-size:1.15rem}
+.hero .hint{margin-top:40px;font-size:.85rem;color:var(--muted)}
+.layer{position:absolute;border-radius:50%;opacity:.5;will-change:transform;pointer-events:none}
+.ticker{position:absolute;left:0;right:0;bottom:12vh;overflow:hidden;opacity:.55;font-family:ui-monospace,Consolas,monospace;font-size:.9rem;white-space:nowrap}
+.ticker div{display:inline-block;animation:tick 40s linear infinite}
+.ticker div.r{animation-direction:reverse}
+.ticker:hover div{animation-play-state:paused}
+@keyframes tick{to{transform:translateX(-50%)}}
+.toc{position:fixed;top:72px;left:50%;transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:45;
+  transition:opacity .4s,transform .4s;display:flex;gap:2px;padding:5px;border-radius:99px;
+  background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(12px);
+  border:1px solid var(--line);box-shadow:var(--shadow);max-width:calc(100vw - 32px);overflow-x:auto}
+.toc.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toc a{padding:7px 12px;border-radius:99px;color:var(--muted);text-decoration:none;font-size:.82rem;white-space:nowrap}
+.toc a.active{background:var(--accent);color:var(--card)}
+.toc a span{margin-left:4px}
+.page{min-height:100vh;display:flex;align-items:center;padding:140px clamp(16px,5vw,64px) 60px;border-top:1px solid var(--line);scroll-margin-top:0}
+.page:nth-of-type(even){background:color-mix(in srgb,var(--card) 60%,var(--bg))}
+.inner{max-width:1180px;margin:0 auto;width:100%;display:grid;grid-template-columns:auto 1fr;gap:8px 40px}
+.num{font-size:clamp(4rem,12vw,9rem);font-weight:800;line-height:.85;color:var(--accent)}
+.page h2{font-size:clamp(2rem,4.5vw,3.4rem);line-height:1.1;align-self:end;margin:0}
+.body{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.15fr;gap:48px;margin-top:32px;align-items:start}
+.body.one{grid-template-columns:1fr}
+.body > *{min-width:0}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}.reveal.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.15s}
+.lead{font-size:1.1rem}
+.muted{color:var(--muted)}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:system-ui,sans-serif;fill:var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:var(--shadow)}
+.note{border-left:4px solid var(--accent);padding:8px 14px;margin:14px 0;color:var(--muted);background:color-mix(in srgb,var(--accent-soft) 40%,transparent);border-radius:0 12px 12px 0}
+.note.blue{border-color:var(--blue);background:color-mix(in srgb,var(--blue-soft) 50%,transparent)}
+.note b{color:var(--ink)}
+.anek{border:1px dashed var(--line);border-radius:18px;padding:14px 18px;margin:16px 0;background:var(--card)}
+.anek::before{content:"Anekdote";display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px}
+.merk{font-size:clamp(1.3rem,2.4vw,1.8rem);font-weight:300;line-height:1.35;margin:18px 0;position:relative;padding-left:34px}
+.merk::before{content:"„";position:absolute;left:0;top:-.3em;font-size:3em;color:var(--accent);line-height:1}
+.merk em{font-style:normal;color:var(--accent);font-weight:600}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));border:1px solid var(--line);border-radius:20px;overflow:hidden;margin:16px 0;background:var(--line);gap:1px}
+.kpi div{background:var(--card);padding:16px}
+.kpi b{display:block;font-size:2rem;color:var(--accent);line-height:1.1}
+.kpi span{font-size:.82rem;color:var(--muted)}
+details{border-top:1px solid var(--line);padding:4px 0}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:48px;font-weight:600}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;transition:transform .25s;font-weight:400}
+details[open] summary::after{transform:rotate(45deg)}
+details > div{padding:0 0 12px}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.tag{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:99px;font-weight:600;white-space:nowrap}
+.t-ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.t-stub{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.t-bad{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.t-blue{background:var(--blue-soft);color:var(--blue)}
+.tree{font-family:ui-monospace,Consolas,monospace;font-size:.86rem;line-height:1.75}
+.tree button{all:unset;cursor:pointer;border-radius:6px;padding:1px 6px}
+.tree button:hover,.tree button[aria-pressed=true]{background:var(--accent-soft)}
+.tree button:focus-visible{outline:2px solid var(--blue)}
+.fileinfo{min-height:220px}
+.fileinfo h3{margin:0 0 6px;font-family:ui-monospace,Consolas,monospace;font-size:1.05rem}
+.steps{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px}
+.step{flex:0 0 min(300px,80vw);scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px}
+.step b.n{font-size:2.6rem;color:var(--accent);line-height:1;display:block}
+.step h4{margin:6px 0}
+.stepnav{display:flex;gap:8px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:20px;overflow:hidden;gap:1px;background:var(--line)}
+.cmp > div{background:var(--card);padding:16px}
+.cmp h4{margin:0 0 8px}
+/* Formelrechner */
+.calc-f{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;margin:14px 0}
+.calc-f .formula{font-family:"Cambria Math",Georgia,serif;font-size:1.3rem;background:var(--accent-soft);border-radius:14px;padding:10px 18px;display:inline-block}
+.calc-f .vars{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.calc-f label{font-size:.82rem;color:var(--muted);display:block} .calc-f label b{color:var(--ink);font-family:"Cambria Math",Georgia,serif}
+.calc-f input{width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;margin-top:4px}
+.calc-f input[aria-invalid=true]{border-color:var(--bad)}
+.calc-f .out{font-size:1.7rem;font-weight:800;color:var(--accent)} .calc-f .way{color:var(--muted);font-family:"Cambria Math",Georgia,serif;font-size:.95rem}
+.calc-f .rs{margin-top:8px}
+.chain{font-size:.75rem;color:var(--blue)}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:44px}
+/* Suche */
+.search{position:fixed;inset:0;z-index:80;display:none;background:color-mix(in srgb,var(--bg) 60%,transparent);backdrop-filter:blur(6px)}
+.search.open{display:block}
+.search .box{max-width:640px;margin:12vh auto 0;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;width:calc(100% - 32px)}
+.search input{width:100%;border:0;border-bottom:1px solid var(--line);padding:18px 20px;font-size:1.15rem;background:transparent;color:var(--ink)}
+.search ul{list-style:none;margin:0;padding:6px;max-height:60vh;overflow:auto}
+.search li{padding:10px 12px;border-radius:12px;cursor:pointer;font-size:.92rem}
+.search li small{display:block;color:var(--accent);font-weight:700;font-size:.74rem;letter-spacing:.05em}
+.search li[aria-selected=true]{background:var(--accent-soft)}
+.search .empty{padding:18px;color:var(--muted)}
+mark{background:color-mix(in srgb,var(--accent) 30%,transparent);color:inherit;border-radius:3px}
+.flash{animation:flash 1.5s}
+@keyframes flash{0%,60%{background:var(--accent-soft)}}
+/* Notizen */
+mark.note-hl{background:color-mix(in srgb,#f2c94c 45%,transparent);color:inherit;border-radius:3px;box-shadow:0 2px 0 #d4a72c;cursor:pointer}
+.addnote{position:absolute;z-index:70;transform:translate(-50%,-115%);border-radius:99px;background:var(--ink);color:var(--bg);display:none;border:0;min-height:40px;padding:0 14px;font:inherit;font-size:.85rem;cursor:pointer;box-shadow:var(--shadow)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);z-index:75;background:var(--card);border-left:1px solid var(--line);transform:translateX(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;padding:20px;gap:10px;overflow:auto}
+.drawer.open{transform:none}
+.drawer blockquote{margin:0;padding:8px 12px;border-left:3px solid #d4a72c;color:var(--muted);font-size:.9rem}
+.drawer textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);color:var(--ink);font:inherit}
+.drawer .row{display:flex;gap:6px;flex-wrap:wrap}
+.drawer .ov a{display:block;padding:6px 0;font-size:.88rem;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.status{font-size:.8rem;color:var(--muted)}
+.ncards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:16px}
+.ncard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px}
+.ncard small{color:var(--accent);font-weight:700}
+.ncard blockquote{margin:6px 0;padding-left:10px;border-left:3px solid #d4a72c;color:var(--muted);font-size:.88rem}
+.filter{min-height:44px;border:1px solid var(--line);border-radius:99px;padding:0 16px;background:var(--card);color:var(--ink);font:inherit;width:min(320px,100%)}
+@media(max-width:800px){.inner,.body,.cmp{grid-template-columns:1fr}.page{padding-top:150px}.toc a span{display:none}.bar .t{font-size:.66rem}.btn kbd{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+@media print{.bar,.progress,.toc,.layer,.search,.drawer,.addnote,.ticker{display:none}mark.note-hl{background:none;box-shadow:none;text-decoration:underline wavy #d4a72c}.page{min-height:0}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<header class="bar">
+  <div class="t">IFC2Print · Code-Atlas</div>
+  <div class="btns">
+    <button class="btn" id="sBtn" aria-label="Suche öffnen">⌕<kbd>Ctrl K</kbd></button>
+    <button class="btn" id="nBtn">✎ Notizen (<span id="nCount">0</span>)</button>
+    <button class="btn" id="themeBtn" aria-label="Hell/Dunkel umschalten">◐</button>
+  </div>
+</header>
+<nav class="toc" id="toc" aria-label="Inhaltsverzeichnis"></nav>
+
+<div class="search" id="search" role="dialog" aria-modal="true" aria-label="Suche">
+  <div class="box">
+    <input id="sIn" type="search" placeholder="Suchen … (z.B. voxel, Regelwerk, Massstab)" aria-controls="sList" aria-activedescendant="" autocomplete="off">
+    <ul id="sList" role="listbox"></ul>
+  </div>
+</div>
+
+<main>
+<section class="hero" id="top">
+  <div class="layer" data-speed=".25" style="width:520px;height:520px;background:var(--accent-soft);top:-120px;left:-140px"></div>
+  <div class="layer" data-speed=".45" style="width:300px;height:300px;background:var(--blue-soft);bottom:8%;right:-60px"></div>
+  <div class="layer" data-speed=".7" style="width:140px;height:140px;border:2px solid var(--accent);opacity:.35;top:22%;right:18%"></div>
+  <div id="heroIn" style="position:relative">
+    <h1>Was dein Code<br>wirklich tut.</h1>
+    <p>IFC2Print – Datei für Datei, Zeile für Zeile erklärt. Vom BIM-Modell über Voxel und Marching Cubes bis zur STL auf dem Prusa MK4. Stand 08.10.2026 nach dem Umbau: Pipeline in <code>core/</code>, Volumen-Voxel ohne Pyramiden, Stufe-2/3-Code in <code>_parkiert/</code>.</p>
+    <div class="hint">↓ scrollen</div>
+  </div>
+  <div class="ticker" aria-hidden="true">
+    <div>ifcopenshell.open · create_shape · USE_WORLD_COORDS · verts × 1000 · apply_scale(1/200) · mesh.contains(punkte) · np.pad · marching_cubes(level=0.5) · fix_normals · is_watertight · ifcopenshell.open · create_shape · USE_WORLD_COORDS · verts × 1000 · apply_scale(1/200) · mesh.contains(punkte) · np.pad · marching_cubes(level=0.5) · fix_normals · is_watertight ·&nbsp;</div><br>
+    <div class="r">IfcWall · IfcSlab · IfcRoof · IfcColumn · IfcBeam · IfcWindow ✕ · IfcDoor ✕ · IfcCurtainWall ✕ · Prusa MK4 · 0.4 mm Düse · 250×210×220 · PLA 1.24 g/cm³ · IfcWall · IfcSlab · IfcRoof · IfcColumn · IfcBeam · IfcWindow ✕ · IfcDoor ✕ · IfcCurtainWall ✕ · Prusa MK4 · 0.4 mm Düse · 250×210×220 · PLA 1.24 g/cm³ ·&nbsp;</div>
+  </div>
+</section>
+
+<!-- 01 -->
+<article class="page" id="k1" data-title="Überblick">
+ <div class="inner">
+  <div class="num reveal">01</div><h2 class="reveal d1">Die Idee in einem Bild</h2>
+  <div class="body">
+   <div class="reveal">
+    <p class="lead">IFC2Print nimmt ein <b>BIM-Modell (IFC)</b>, wirft alles weg, was im Massstab nicht druckbar oder unnötig ist (Fenster, Möbel, Räume), und erzeugt daraus ein <b>geschlossenes Dreiecksnetz (STL)</b>, das der Slicer ohne Fehler frisst.</p>
+    <p>Das Kernproblem: IFC-Geometrie ist für Planung gemacht, nicht für den Druck. Bauteile überlappen, stossen nur aneinander, haben Spalten im Zehntelmillimeter-Bereich. Ein 3D-Drucker braucht aber <b>ein einziges, wasserdichtes Volumen</b>. Die Lösung im Code: Alles wird in kleine Würfel (Voxel) «gerastert» und danach wieder zu einer sauberen Oberfläche zusammengesetzt.</p>
+    <div class="merk">Nicht reparieren, sondern <em>neu aufbauen</em>: Die Voxel-Hülle ersetzt die chaotische IFC-Geometrie durch ein garantiert geschlossenes Netz.</div>
+    <div class="kpi">
+      <div><b data-count="60">0</b><span>Zeilen Skript (vorher 184) – Logik jetzt in core/</span></div>
+      <div><b data-count="188">0</b><span>Dreiecke im Rohnetz (Testmodell)</span></div>
+      <div><b data-count="89848">0</b><span>Dreiecke in der Voxel-Hülle (neue Methode)</span></div>
+      <div><b data-count="10">0</b><span>Unit-Tests</span></div>
+    </div>
+    <p class="muted" style="font-size:.85rem">Dreieckszahlen aus den Dateigrössen deiner STL-Dateien in <code>output/</code> berechnet (binäre STL = 84 Byte + 50 Byte pro Dreieck) bzw. aus dem Testlauf nach dem Umbau.</p>
+   </div>
+   <div class="reveal d2">
+    <svg viewBox="0 0 520 560" role="img" aria-label="Pipeline von IFC bis STL in neun Schritten">
+     <title>Pipeline IFC → STL</title>
+     <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+     <g font-size="13">
+      <rect x="20" y="10" width="220" height="48" rx="12" fill="var(--blue-soft)" stroke="var(--blue)"/><text x="130" y="31" text-anchor="middle" font-weight="700">IFC-Datei</text><text x="130" y="48" text-anchor="middle" font-size="11" fill="var(--muted)">ifcopenshell.open()</text>
+      <rect x="20" y="78" width="220" height="48" rx="12" fill="var(--card)" stroke="var(--line)"/><text x="130" y="99" text-anchor="middle" font-weight="700">Klassen filtern</text><text x="130" y="116" text-anchor="middle" font-size="11" fill="var(--muted)">Wand, Decke, Dach, Stütze, Träger</text>
+      <rect x="20" y="146" width="220" height="48" rx="12" fill="var(--card)" stroke="var(--line)"/><text x="130" y="167" text-anchor="middle" font-weight="700">Triangulieren</text><text x="130" y="184" text-anchor="middle" font-size="11" fill="var(--muted)">create_shape → verts/faces</text>
+      <rect x="20" y="214" width="220" height="48" rx="12" fill="var(--card)" stroke="var(--line)"/><text x="130" y="235" text-anchor="middle" font-weight="700">m → mm, 1:200</text><text x="130" y="252" text-anchor="middle" font-size="11" fill="var(--muted)">×1000, apply_scale(1/200)</text>
+      <rect x="20" y="282" width="220" height="48" rx="12" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="130" y="303" text-anchor="middle" font-weight="700">rohnetz.stl</text><text x="130" y="320" text-anchor="middle" font-size="11" fill="var(--muted)">nicht wasserdicht</text>
+      <path d="M130 58v18M130 126v18M130 194v18M130 262v18" stroke="var(--muted)" stroke-width="1.6" marker-end="url(#ar)"/>
+      <path d="M240 306 C300 306 300 34 330 34" fill="none" stroke="var(--muted)" stroke-width="1.6" marker-end="url(#ar)"/>
+      <rect x="280" y="10" width="220" height="48" rx="12" fill="var(--card)" stroke="var(--line)"/><text x="390" y="31" text-anchor="middle" font-weight="700">Voxelisieren</text><text x="390" y="48" text-anchor="middle" font-size="11" fill="var(--muted)">Raster 0.4 mm über alles</text>
+      <rect x="280" y="78" width="220" height="48" rx="12" fill="var(--card)" stroke="var(--line)"/><text x="390" y="99" text-anchor="middle" font-weight="700">Mittelpunkt-Test</text><text x="390" y="116" text-anchor="middle" font-size="11" fill="var(--muted)">contains() pro Bauteil, np.pad</text>
+      <rect x="280" y="146" width="220" height="48" rx="12" fill="var(--card)" stroke="var(--line)"/><text x="390" y="167" text-anchor="middle" font-weight="700">Marching Cubes</text><text x="390" y="184" text-anchor="middle" font-size="11" fill="var(--muted)">Voxel → Oberfläche</text>
+      <rect x="280" y="214" width="220" height="48" rx="12" fill="var(--card)" stroke="var(--line)"/><text x="390" y="235" text-anchor="middle" font-weight="700">Normalen ausrichten</text><text x="390" y="252" text-anchor="middle" font-size="11" fill="var(--muted)">keine Glättung → scharfe Kanten</text>
+      <rect x="280" y="282" width="220" height="48" rx="12" fill="var(--accent)" stroke="var(--accent)"/><text x="390" y="303" text-anchor="middle" font-weight="700" fill="var(--card)" style="fill:var(--card)">huelle_1_200.stl</text><text x="390" y="320" text-anchor="middle" font-size="11" style="fill:var(--card)">wasserdicht → Slicer</text>
+      <path d="M390 58v18M390 126v18M390 194v18M390 262v18" stroke="var(--muted)" stroke-width="1.6" marker-end="url(#ar)"/>
+     </g>
+     <g font-size="12">
+      <text x="20" y="380" font-weight="700">Was heute davon im Code existiert</text>
+      <rect x="20" y="394" width="480" height="26" rx="8" fill="var(--line)"/>
+      <rect x="20" y="394" width="200" height="26" rx="8" fill="var(--ok)"/>
+      <text x="30" y="412" style="fill:var(--card)" font-weight="700">läuft (Stufe 0 in core/)</text>
+      <text x="230" y="412" fill="var(--muted)">Gerüst bzw. _parkiert/ (Stufen 1–3)</text>
+      <text x="20" y="450" fill="var(--muted)">Alles auf diesem Bild läuft – und zwar in den Modulen</text>
+      <text x="20" y="468" fill="var(--muted)"><tspan font-family="monospace">core/ifc_modell.py</tspan> und <tspan font-family="monospace">core/huelle.py</tspan>.</text>
+      <text x="20" y="486" fill="var(--muted)">Das Skript ruft sie nur noch auf und misst die Zeit.</text>
+      <text x="20" y="504" fill="var(--muted)">Stufe-2/3-Code liegt geparkt in <tspan font-family="monospace">_parkiert/</tspan>.</text>
+     </g>
+    </svg>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 02 -->
+<article class="page" id="k2" data-title="Dateien">
+ <div class="inner">
+  <div class="num reveal">02</div><h2 class="reveal d1">Jede Datei, ein Satz</h2>
+  <div class="body">
+   <div class="reveal">
+    <p>Klick auf eine Datei im Baum. Farbcode: <span class="tag t-ok">läuft</span> echter, nutzbarer Code · <span class="tag t-stub">Gerüst</span> Signaturen mit <code>raise NotImplementedError</code> · <span class="tag t-blue">Daten/Doku</span>.</p>
+    <div class="card tree" id="tree" aria-label="Dateibaum"></div>
+   </div>
+   <div class="reveal d2">
+    <div class="card fileinfo" id="fileinfo" aria-live="polite"></div>
+    <div class="note blue"><b>Aufgeräumt am 08.10.:</b> Claude Code hatte die Architektur «top-down» angelegt – alle Module M1–M6 als leere Funktionen. Was erst ab Stufe 2/3 gebraucht wird (<code>db/</code>, <code>aufteilung.py</code>, <code>export.py</code>), liegt jetzt in <code>_parkiert/</code>, in derselben Ordnerstruktur, und kann 1:1 zurückgeschoben werden. Die frühere Doppelung (Pipeline fertig im Skript, leer in <code>core/</code>) ist aufgelöst: Der Code ist nach <code>core/</code> umgezogen.</div>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 03 -->
+<article class="page" id="k3" data-title="Pipeline-Code">
+ <div class="inner">
+  <div class="num reveal">03</div><h2 class="reveal d1">Der Pipeline-Code: Skript → core/</h2>
+  <div class="body one">
+   <div class="reveal">
+    <p class="lead">Das Skript <code>scripts/stufe0_machbarkeit.py</code> ist nur noch ein dünner Aufrufer (~60 Zeilen). Die Arbeit machen zwei Module. Wisch durch die Schritte:</p>
+    <div class="stepnav" style="margin-bottom:10px"><button class="btn" data-sn="-1" aria-label="zurück">←</button><button class="btn" data-sn="1" aria-label="weiter">→</button></div>
+    <div class="steps" id="steps">
+     <div class="step"><b class="n">0</b><h4>Skript: Einstellungen</h4><p>Holt <code>MASSSTAB_DEFAULT</code> (200) und <code>VOXEL_PITCH_MM</code> (0.4) aus <code>config.py</code>. Eigene Werte hat es nur noch für den Pfad zur Testdatei und die Klassenliste <code>KLASSEN_BEHALTEN</code> (6 Klassen). Mit <code>sys.path.insert</code> wird der Projektordner importierbar, sonst fände Python <code>core</code> nicht.</p></div>
+     <div class="step"><b class="n">1</b><h4>IfcModell.bauteile_laden()</h4><p>In <code>core/ifc_modell.py</code>. Läuft über alle <code>IfcProduct</code> mit Geometrie und sammelt GUID, Klasse, Name und Geschoss in einem DataFrame. Das Skript druckt daraus die Statistik pro Klasse und Geschoss. Ab Stufe 1 kommen BBox und minimale Dicke dazu.</p></div>
+     <div class="step"><b class="n">2</b><h4>IfcModell.rohnetz_erzeugen()</h4><p>Sammelt alle Elemente der Klassen, <b>dedupliziert per ID</b>, trianguliert jedes mit <code>create_shape</code> (Weltkoordinaten), rechnet m → mm → Massstab. Rückgabe: Gesamtnetz, <b>Liste der Einzelnetze</b> und Anzahl Elemente ohne Geometrie.</p></div>
+     <div class="step"><b class="n">3</b><h4>huelle_erzeugen(meshes, pitch)</h4><p>In <code>core/huelle.py</code>. Legt ein 0.4-mm-Raster über alles, prüft pro Bauteil, welche Voxel-Mittelpunkte darin liegen, polstert mit Nullrand, macht Marching Cubes und richtet die Normalen aus. Rückgabe: Hülle + Info (Matrix, gefüllte Voxel, RAM, übersprungene Bauteile).</p></div>
+     <div class="step"><b class="n">4</b><h4>Skript: main()</h4><p>Ruft 1–3 auf, exportiert <code>rohnetz.stl</code> und <code>huelle_1_200.stl</code>, misst die Laufzeit mit <code>perf_counter</code> und gibt die Werte für die README aus.</p></div>
+    </div>
+    <details><summary>Code-Detail: Triangulieren – was passiert in diesen Zeilen?</summary><div>
+<pre>elemente = {e.id(): e <span class="k">for</span> k <span class="k">in</span> klassen <span class="k">for</span> e <span class="k">in</span> self.modell.by_type(k)}  <span class="c"># Duplikate raus</span>
+shape = ifcopenshell.geom.create_shape(settings, element)
+verts = np.array(shape.geometry.verts).reshape(-1, 3) * 1000 / massstab  <span class="c"># m → mm → Modell</span>
+faces = np.array(shape.geometry.faces).reshape(-1, 3)                    <span class="c"># je 3 Indizes = 1 Dreieck</span></pre>
+     <p>IfcOpenShell rechnet die IFC-Geometrie (Extrusionen, Öffnungen, BReps) mit OpenCASCADE aus und liefert ein Dreiecksnetz in <b>Metern</b> – egal, in welcher Einheit die IFC gespeichert ist. <code>USE_WORLD_COORDS</code> setzt jedes Bauteil an seine richtige Stelle im Gebäude.</p>
+     <div class="anek">Der Dedupliziert-Trick behebt einen versteckten Fehler: <code>by_type("IfcWall")</code> liefert auch alle <code>IfcWallStandardCase</code> (Unterklasse). Weil beide Klassen in der Liste stehen, wurde in IFC2x3-Dateien jede Standardwand doppelt trianguliert.</div></div></details>
+    <details><summary>Code-Detail: Warum np.pad mit einem Voxel Nullrand?</summary><div>
+     <p>Marching Cubes erzeugt nur dort eine Fläche, wo der Wert von «voll» (1) auf «leer» (0) wechselt. Berührt das Gebäude den Rand der Matrix, bleibt die Hülle dort <b>offen</b>. Der Nullrand garantiert überall einen Übergang. Weil sich dadurch alle Indizes um 1 verschieben, wird bei der Rückrechnung <code>verts - 1</code> gerechnet.</p>
+     <div class="anek">Laut <code>PLAN.md</code> war das der erste Bug des Projekts: Die Hülle war anfänglich nicht dicht – ein Klassiker bei Marching Cubes.</div></div></details>
+    <details><summary>Code-Detail: Marching Cubes und die Rücktransformation</summary><div>
+<pre>verts, faces, _, _ = marching_cubes(gepolstert, level=0.5)          <span class="c"># verts in Voxel-Indizes</span>
+verts_mm = (verts - 1) * pitch_mm + unten + pitch_mm / 2            <span class="c"># Index → mm</span></pre>
+     <p><code>level=0.5</code>: Die Fläche liegt genau zwischen «voll» (1) und «leer» (0). <code>unten + pitch/2</code> ist der Mittelpunkt des ersten Voxels, <code>-1</code> korrigiert das Padding.</p></div></details>
+    <details><summary>Warum keine Glättung mehr?</summary><div>
+     <p>Früher lief <code>filter_laplacian(iterations=2)</code>: Jeder Punkt wurde Richtung Mittelwert seiner Nachbarn verschoben, um die Voxel-Treppchen zu verwischen. Für die Wasserdichtigkeit war das <b>nie nötig</b> (getestet). Weil scharfe Kanten beim Architekturmodell wichtiger sind, ist sie entfernt. Gerade, achsparallele Wände sind jetzt plan; an Ecken bleibt eine Mini-Fase von ca. 0.2 mm, schräge Flächen zeigen 0.4-mm-Stufen.</p></div></details>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 04 -->
+<article class="page" id="k4" data-title="Voxel">
+ <div class="inner">
+  <div class="num reveal">04</div><h2 class="reveal d1">Voxel & Marching Cubes verstehen</h2>
+  <div class="body">
+   <div class="reveal">
+    <p>Ein Voxel ist ein 3D-Pixel. Die Kantenlänge (<b>pitch</b>) ist 0.4 mm = halbe Mindestwand (0.8 mm). Ein Voxel zählt als voll, wenn sein Mittelpunkt im Bauteil liegt. Gedanke dahinter: Eine Wand, die gerade noch druckbar ist, wird mindestens von 2 Voxeln abgebildet.</p>
+    <p>Schieb den Regler: Wie viele Voxel bekommt eine reale Wand im Modell?</p>
+    <label for="wR">Reale Wanddicke: <b id="wV">200</b> mm</label>
+    <input type="range" id="wR" min="50" max="500" step="10" value="200">
+    <label for="mR">Massstab 1 : <b id="mV">200</b></label>
+    <input type="range" id="mR" min="50" max="1000" step="50" value="200">
+    <div class="kpi"><div><b id="wM">1.00</b><span>mm im Modell</span></div><div><b id="wN">2.5</b><span>Voxel quer</span></div><div><b id="wS" style="font-size:1.2rem">druckbar</b><span>Status nach config</span></div></div>
+    <div class="note"><b>Prüfungsfalle:</b> Unter 1 Voxel (&lt; 0.4 mm) kann eine Wand beim Rastern <b>ganz verschwinden</b> oder löchrig werden – noch bevor die Druckbarkeitsprüfung greift. Beispiel Testmodell: Die 2-cm-«plumbing wall» ist bei 1:200 nur 0.1 mm dick und verschwindet. Hier zufällig richtig, verlässlich wird es erst mit der Dickenprüfung aus Stufe 1.</div>
+    <details open><summary>Methodenwechsel: Oberflächen-Voxel → Volumen-Voxel</summary><div>
+     <p><b>Früher:</b> <code>trimesh.voxelized()</code> markierte jeden Voxel, den eine Fläche nur streift, danach füllte <code>binary_fill_holes</code> das Innere. Dadurch wurde jedes Bauteil um bis zu 1 Voxel dicker (Volumen 4988 statt 3476 mm³), und auf der schrägen Dachfläche standen einzelne Voxel über – Marching Cubes machte daraus <b>kleine Pyramiden</b>.</p>
+     <p><b>Jetzt:</b> Ein Voxel ist nur voll, wenn sein <b>Mittelpunkt im Bauteil liegt</b> (<code>mesh.contains</code>, pro Bauteil, nur Punkte in dessen BBox). Wände haben das richtige Mass, Pyramiden und Firstrille sind weg, Räume werden nicht mehr zugefüllt. Preis: 12 s statt 3 s Laufzeit, neue Abhängigkeit <code>rtree</code>, und offene (nicht dichte) Bauteile werden übersprungen.</p>
+     <div class="anek">Entdeckt im PrusaSlicer: Erst nach dem Entfernen der Glättung tauchten die Pyramiden auf – die Glättung hatte den eigentlichen Fehler jahrelang… na gut, einen Tag lang kaschiert.</div>
+     <img src="vergleich_voxel_alt_neu.png" alt="Vergleich: links alte Methode mit Pyramiden auf dem Dach, rechts neue Methode mit glatter Dachfläche" loading="lazy" style="width:100%;border-radius:14px;border:1px solid var(--line);margin-top:8px">
+    </div></details>
+    <details><summary>Früher: Was machte binary_fill_holes?</summary><div>
+     <p><code>trimesh.voxelized()</code> markiert nur Voxel, die die <b>Oberfläche</b> schneiden – das Innere einer dicken Wand ist zunächst leer. <code>binary_fill_holes</code> füllt jeden leeren Bereich, der <b>nicht mit dem Aussenrand verbunden</b> ist. Gut für Wandkerne. Nebenwirkung: Ein Raum, der rundum geschlossen ist (keine Öffnung zur Aussenluft), wird <b>komplett zu Vollmaterial</b>. Da Fenster und Türen im Wandkörper als Öffnungen ausgeschnitten sind, bleiben die meisten Räume offen – aber z.B. ein fensterloser Schacht wird massiv. Das kostete Filament. Mit der neuen Methode entfällt dieser Schritt ganz.</p></div></details>
+   </div>
+   <div class="reveal d2">
+    <svg viewBox="0 0 440 400" role="img" aria-label="Querschnitt einer Wand im Voxelgitter" id="voxSvg">
+     <title>Wand im Voxelgitter</title>
+     <g id="voxG"></g>
+     <text x="20" y="390" font-size="12" fill="var(--muted)">Querschnitt: Rot = reale Wand im Modellmass · Kästchen = Voxel à 0.4 mm · gefüllt = Mittelpunkt liegt in der Wand</text>
+    </svg>
+    <div class="cmp" style="margin-top:16px">
+     <div><h4>Voxel-Hülle (gewählt)</h4><p class="muted">+ garantiert wasserdicht<br>+ robust gegen Überlappungen<br>− Treppen/Rundungen<br>− RAM wächst mit Volumen³</p></div>
+     <div><h4>Boolesche Vereinigung (Stufe 5)</h4><p class="muted">+ scharfe Kanten, exakt<br>+ kleine Dateien<br>− bricht bei unsauberer IFC-Geometrie<br>− geplant mit <code>manifold3d</code> (noch nicht in requirements)</p></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 05 -->
+<article class="page" id="k5" data-title="Druckbarkeit">
+ <div class="inner">
+  <div class="num reveal">05</div><h2 class="reveal d1">Massstab & Druckbarkeit</h2>
+  <div class="body">
+   <div class="reveal">
+    <p><code>core/druckbarkeit.py</code> enthält die einzigen <b>wirklich fertigen</b> Fachfunktionen: Massstab umrechnen, Ampel-Status bestimmen, Bauraum prüfen. Die Schwellwerte stammen aus <code>config.py</code>: 0.8 mm = 2 Extrusionslinien à 0.4 mm.</p>
+    <div class="calc-f" id="cMass">
+     <div class="formula">d<sub>Modell</sub> = d<sub>real</sub> / M</div>
+     <div class="vars">
+      <label><b>d<sub>real</sub></b> · reales Mass [mm]<input data-var="d" inputmode="decimal" value="200"></label>
+      <label><b>M</b> · Massstabszahl [–]<input data-var="m" inputmode="decimal" value="200"></label>
+     </div>
+     <div class="out"></div><div class="way"></div><div class="rs"></div>
+     <button class="btn" data-reset>Zurücksetzen</button>
+    </div>
+    <div class="calc-f" id="cBau">
+     <div class="formula">passt ⇔ x ≤ 250 ∧ y ≤ 210 ∧ z ≤ 220</div>
+     <div class="vars">
+      <label><b>L</b> · Gebäudelänge real [m]<input data-var="x" inputmode="decimal" value="40"></label>
+      <label><b>B</b> · Gebäudebreite real [m]<input data-var="y" inputmode="decimal" value="25"></label>
+      <label><b>H</b> · Gebäudehöhe real [m]<input data-var="z" inputmode="decimal" value="20"></label>
+      <label><b>M</b> · Massstabszahl [–] <span class="chain">↳ aus Rechner oben</span><input data-var="m" inputmode="decimal" value="200"></label>
+     </div>
+     <div class="out"></div><div class="way"></div>
+     <button class="btn" data-reset>Zurücksetzen</button>
+    </div>
+   </div>
+   <div class="reveal d2">
+    <svg viewBox="0 0 440 230" role="img" aria-label="Ampel der Druckbarkeit: unter 0.8 mm nicht druckbar, 0.8 bis 1.2 kritisch, ab 1.2 druckbar">
+     <title>Druckbarkeits-Ampel</title>
+     <rect x="20" y="60" width="160" height="40" fill="var(--bad)" opacity=".85" rx="8"/>
+     <rect x="180" y="60" width="80" height="40" fill="var(--warn)" opacity=".85"/>
+     <rect x="260" y="60" width="160" height="40" fill="var(--ok)" opacity=".85" rx="8"/>
+     <g font-size="12" font-weight="700" style="fill:#fff"><text x="100" y="85" text-anchor="middle" style="fill:#fff">✕ nicht_druckbar</text><text x="220" y="85" text-anchor="middle" style="fill:#fff">! kritisch</text><text x="340" y="85" text-anchor="middle" style="fill:#fff">✓ druckbar</text></g>
+     <g font-size="12" fill="var(--muted)"><text x="180" y="122" text-anchor="middle">0.8 mm</text><text x="260" y="122" text-anchor="middle">1.2 mm</text><text x="20" y="122">0</text></g>
+     <path d="M180 56v50M260 56v50" stroke="var(--ink)" stroke-dasharray="3 3"/>
+     <polygon id="ptr" points="0,0 -8,-14 8,-14" fill="var(--ink)" transform="translate(240,56)"/>
+     <text x="20" y="30" font-size="13" font-weight="700">Modelldicke →</text>
+     <text x="20" y="160" font-size="12" fill="var(--muted)">Bei 1:200 entspricht das realen Dicken von</text>
+     <text x="20" y="178" font-size="12" fill="var(--muted)">160 mm (Grenze) und 240 mm (sicher).</text>
+     <text x="20" y="206" font-size="12" fill="var(--muted)">Der Zeiger folgt dem oberen Rechner.</text>
+    </svg>
+<pre><span class="k">def</span> druckbarkeits_status(d):
+    <span class="k">if</span> d >= KRITISCH_BIS_MM: <span class="k">return</span> <span class="s">"druckbar"</span>       <span class="c"># ≥ 1.2</span>
+    <span class="k">if</span> d >= MINDESTWAND_MM:  <span class="k">return</span> <span class="s">"kritisch"</span>       <span class="c"># 0.8 … 1.2</span>
+    <span class="k">return</span> <span class="s">"nicht_druckbar"</span>                       <span class="c"># &lt; 0.8</span></pre>
+    <div class="note"><b>Widerspruch im PLAN.md:</b> Dort steht «Mindestdicke prüfen (Massstab × 0.8 mm Düse = Schwellwert)». Das vermischt zwei Dinge: Die Düse ist 0.4 mm, die Mindestwand 0.8 mm. Und «Massstab × 0.8» ergibt die <b>reale</b> Mindestdicke (1:200 → 160 mm), nicht den Modell-Schwellwert. Der Code selbst ist korrekt – er rechnet im Modellmass.</div>
+    <p class="muted"><code>status_spalte_hinzufuegen()</code> fehlt noch: Dafür braucht es pro Bauteil eine «minimale Dicke», die M1 (<code>bauteile_laden</code>) liefern soll – ebenfalls noch leer.</p>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 06 -->
+<article class="page" id="k6" data-title="Regelwerk">
+ <div class="inner">
+  <div class="num reveal">06</div><h2 class="reveal d1">Regelwerk & Datenbank</h2>
+  <div class="body">
+   <div class="reveal">
+    <p><code>core/regelwerk.py</code> entscheidet pro IFC-Klasse, was passiert. Vier Aktionen sind definiert:</p>
+    <table>
+     <tr><th>Aktion</th><th>Bedeutung</th><th>Heute umgesetzt?</th></tr>
+     <tr><td><code>behalten</code></td><td>Bauteil unverändert drucken</td><td><span class="tag t-ok">nur im Skript (fixe Klassenliste)</span></td></tr>
+     <tr><td><code>entfernen</code></td><td>weglassen (Fenster, Türen, Möbel …)</td><td><span class="tag t-ok">implizit: nicht in der Liste</span></td></tr>
+     <tr><td><code>verdicken</code></td><td>dünne Stützen/Träger auf Mindestmass</td><td><span class="tag t-stub">nein – nur Name</span></td></tr>
+     <tr><td><code>fuellen</code></td><td>z.B. Fensteröffnung schliessen</td><td><span class="tag t-stub">nein – nirgends zugewiesen</span></td></tr>
+    </table>
+<pre><span class="k">def</span> aktion(self, ifc_klasse):
+    <span class="k">return</span> self.regeln.get(ifc_klasse, <span class="s">"behalten"</span>)   <span class="c"># unbekannt → behalten</span></pre>
+    <details><summary>Warum «unbekannt → behalten» und nicht «entfernen»?</summary><div><p>Design-Entscheid «lieber zu viel als zu wenig»: Ein unerwartetes Bauteil im Modell fällt dir in der Vorschau auf; ein fehlendes Bauteil eher nicht. Nachteil: Eine exotische Klasse (z.B. <code>IfcCovering</code> – Bodenbelag, 1 cm dick) landet ungefragt im Druck.</p></div></details>
+    <details><summary>Versteckter Bug: Regelwerk({}) </summary><div><p><code>self.regeln = regeln or DEFAULT_REGELN.copy()</code> – ein leeres Dict ist in Python «falsy». Wer bewusst <code>Regelwerk({})</code> übergibt, bekommt trotzdem die Default-Regeln. Sauberer: <code>DEFAULT_REGELN.copy() if regeln is None else regeln</code>.</p></div></details>
+    <details><summary>Achtung: Skript und Regelwerk sind nicht verbunden</summary><div><p>Das Stufe-0-Skript nutzt weiterhin sein eigenes Set <code>KLASSEN_BEHALTEN</code> (6 Klassen) – bewusst noch nicht vereinheitlicht, weil sich sonst das Ergebnis ändert. Das Regelwerk würde zusätzlich <code>IfcStair</code> und <code>IfcStairFlight</code> behalten. Zwei Wahrheiten für dieselbe Frage – das sollte in Stufe 1 zusammengeführt werden.</p></div></details>
+   </div>
+   <div class="reveal d2">
+    <p><b>Stufe 2:</b> Die Regeln wandern in SQLite. Das Schema liegt aktuell geparkt in <code>_parkiert/db/schema.sql</code>. Vier Tabellen:</p>
+    <svg viewBox="0 0 460 330" role="img" aria-label="Datenbankschema mit vier Tabellen: drucker_profil, material, regel, exportlauf">
+     <title>Datenbankschema</title>
+     <g font-size="11">
+      <rect x="10" y="10" width="190" height="130" rx="12" fill="var(--card)" stroke="var(--line)"/><rect x="10" y="10" width="190" height="26" rx="12" fill="var(--blue-soft)"/>
+      <text x="20" y="28" font-weight="700">drucker_profil</text>
+      <text x="20" y="54">id PK</text><text x="20" y="72">name</text><text x="20" y="90">duese_mm, layer_mm</text><text x="20" y="108">bauraum_x / y / z</text>
+      <rect x="10" y="170" width="190" height="100" rx="12" fill="var(--card)" stroke="var(--line)"/><rect x="10" y="170" width="190" height="26" rx="12" fill="var(--blue-soft)"/>
+      <text x="20" y="188" font-weight="700">material</text>
+      <text x="20" y="214">id PK, name</text><text x="20" y="232">dichte_g_cm3</text><text x="20" y="250">preis_chf_kg</text>
+      <rect x="260" y="10" width="190" height="110" rx="12" fill="var(--card)" stroke="var(--line)"/><rect x="260" y="10" width="190" height="26" rx="12" fill="var(--accent-soft)"/>
+      <text x="270" y="28" font-weight="700">regel</text>
+      <text x="270" y="54">id PK, regelset</text><text x="270" y="72">ifc_klasse, aktion</text><text x="270" y="90">parameter_json</text>
+      <rect x="260" y="140" width="190" height="180" rx="12" fill="var(--card)" stroke="var(--line)"/><rect x="260" y="140" width="190" height="26" rx="12" fill="var(--accent-soft)"/>
+      <text x="270" y="158" font-weight="700">exportlauf</text>
+      <text x="270" y="184">id, datum, ifc_name</text><text x="270" y="202">massstab</text><text x="270" y="220" font-weight="700">profil_id FK</text><text x="270" y="238">regelset (Text!)</text><text x="270" y="256">modus, fenster_fuellen</text><text x="270" y="274">anzahl_teile</text><text x="270" y="292">filament_g, zeit_h, kosten_chf</text>
+      <path d="M200 70 C230 70 230 216 258 216" fill="none" stroke="var(--ink)" stroke-width="1.4" marker-end="url(#ar)"/>
+      <path d="M355 120v18" stroke="var(--muted)" stroke-dasharray="4 3"/>
+      <text x="364" y="133" fill="var(--muted)">nur per Name</text>
+     </g>
+    </svg>
+    <p class="muted">Die Seed-Dateien (<code>_parkiert/db/seed/*.csv</code>) enthalten 1 Drucker, 1 Material und 2 Regelsets («Standard 1:200», «Volumen 1:500» – Letzteres entfernt auch Treppen). <b>Es gibt noch keinen Code, der die CSVs in die DB lädt</b>, und <code>material</code> ist nicht mit <code>exportlauf</code> verknüpft.</p>
+    <div class="anek">Im <code>PLAN.md</code> wurde ursprünglich überlegt, Bauteile über eBKP-H (Schweizer Baukostenplan) zu klassifizieren. Entschieden wurde «Option 2: IFC-Klassen direkt» – weil fast keine Test-IFC eBKP-H-Codes enthält. Die eBKP-H-Idee lebt in deinem separaten Kostentool weiter.</div>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 07 -->
+<article class="page" id="k7" data-title="Kalkulation">
+ <div class="inner">
+  <div class="num reveal">07</div><h2 class="reveal d1">Filament, Kosten, Druckzeit</h2>
+  <div class="body">
+   <div class="reveal">
+    <p><code>core/kalkulation.py</code> ist fertig, aber noch nirgends aufgerufen. Drei Formeln, verkettet:</p>
+    <div class="calc-f" id="cFil">
+     <div class="formula">m = V · f · ρ</div>
+     <div class="vars">
+      <label><b>V</b> · Netzvolumen [cm³]<input data-var="v" inputmode="decimal" value="100"></label>
+      <label><b>f</b> · VOLUMEN_FAKTOR [–]<input data-var="f" inputmode="decimal" value="0.4"></label>
+      <label><b>ρ</b> · Dichte PLA [g/cm³]<input data-var="r" inputmode="decimal" value="1.24"></label>
+     </div>
+     <div class="out"></div><div class="way"></div><button class="btn" data-reset>Zurücksetzen</button>
+    </div>
+    <div class="calc-f" id="cKost">
+     <div class="formula">K = m / 1000 · p</div>
+     <div class="vars">
+      <label><b>m</b> · Filament [g] <span class="chain">↳ aus m oben</span><input data-var="g" inputmode="decimal" value="49.6"></label>
+      <label><b>p</b> · Preis [CHF/kg]<input data-var="p" inputmode="decimal" value="25"></label>
+     </div>
+     <div class="out"></div><div class="way"></div><button class="btn" data-reset>Zurücksetzen</button>
+    </div>
+   </div>
+   <div class="reveal d2">
+    <div class="calc-f" id="cZeit">
+     <div class="formula">t = V · f / Q + (h / l<sub>h</sub>) · 0.001</div>
+     <div class="vars">
+      <label><b>V</b> · Volumen [cm³] <span class="chain">↳ verkettet</span><input data-var="v" inputmode="decimal" value="100"></label>
+      <label><b>f</b> · Faktor [–]<input data-var="f" inputmode="decimal" value="0.4"></label>
+      <label><b>Q</b> · Durchsatz [cm³/h]<input data-var="q" inputmode="decimal" value="10"></label>
+      <label><b>h</b> · Modellhöhe [mm]<input data-var="h" inputmode="decimal" value="60"></label>
+      <label><b>l<sub>h</sub></b> · Layerhöhe [mm]<input data-var="l" inputmode="decimal" value="0.2"></label>
+     </div>
+     <div class="out"></div><div class="way"></div><button class="btn" data-reset>Zurücksetzen</button>
+    </div>
+    <div class="note"><b>Ehrlich gesagt:</b> Das sind grobe Schätzungen. <code>VOLUMEN_FAKTOR = 0.4</code> fasst Infill und Wände in eine Zahl zusammen, der Layer-Zuschlag (0.001 h = 3.6 s pro Layer) ist im Code selbst als «empirisch kalibrieren» markiert. Für die Abgabe: mit einem echten PrusaSlicer-Ergebnis vergleichen und Faktor anpassen.</div>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 08 -->
+<article class="page" id="k8" data-title="Config & Tests">
+ <div class="inner">
+  <div class="num reveal">08</div><h2 class="reveal d1">config.py, Tests, Abhängigkeiten</h2>
+  <div class="body">
+   <div class="reveal">
+    <p><b>config.py</b> ist die «Single Source of Truth» für alle Zahlen: Druckerprofil, Schwellwerte, Voxel-Pitch, Massstabsgrenzen, Zapfen (3 mm Ø, 0.2 mm Toleranz → Loch 3.4 mm), Bodenplatte 1.6 mm, PLA-Daten. Später sollen diese Werte aus der DB kommen.</p>
+    <p class="note"><b>Zapfen-Logik:</b> Loch-Ø = 3.0 + 2 × 0.2 = 3.4 mm. Die Toleranz gilt pro Seite, darum ×2 – sonst klemmt der Zapfen.</p>
+    <p><b>tests/</b> enthält 10 pytest-Tests (6 Druckbarkeit, 4 Regelwerk). Sie testen nur reine Funktionen ohne IFC – deshalb laufen sie schnell und ohne Testdatei. Jede Datei hängt mit <code>sys.path.insert</code> den Projektordner an, damit <code>from core… import</code> funktioniert.</p>
+    <details><summary>Was die Tests NICHT abdecken</summary><div><p>Die Grenzwerte selbst (genau 0.8 und genau 1.2 mm), die Kalkulation, die Datenbank und die ganze Geometrie-Pipeline. Ein Test für <code>druckbarkeits_status(0.8) == "kritisch"</code> wäre die wichtigste Ergänzung – an Grenzen passieren die Fehler.</p></div></details>
+   </div>
+   <div class="reveal d2">
+    <p><b>requirements.txt</b> (54 Pakete, exakt gepinnt). Die eigentlich genutzten:</p>
+    <table>
+     <tr><th>Paket</th><th>Wofür</th></tr>
+     <tr><td><code>ifcopenshell</code></td><td>IFC lesen, Geometrie triangulieren</td></tr>
+     <tr><td><code>trimesh</code></td><td>Netze, Voxelisieren, Reparatur, STL-Export</td></tr>
+     <tr><td><code>numpy</code></td><td>Arrays, Padding</td></tr>
+     <tr><td><code>rtree</code></td><td>räumlicher Index für <code>mesh.contains</code> (neu)</td></tr>
+     <tr><td><code>scipy</code></td><td>nur noch indirekt (trimesh)</td></tr>
+     <tr><td><code>scikit-image</code></td><td><code>marching_cubes</code></td></tr>
+     <tr><td><code>pandas</code></td><td>Bauteil-Tabellen</td></tr>
+     <tr><td><code>streamlit</code></td><td>Web-UI (app.py)</td></tr>
+     <tr><td><code>shapely, networkx</code></td><td>Abhängigkeiten von trimesh</td></tr>
+    </table>
+    <p class="muted">Der Rest (altair, pyarrow, uvicorn, starlette, matplotlib …) sind Unterabhängigkeiten – so sieht ein <code>pip freeze</code> aus.</p>
+    <div class="note blue"><b>Ergänzt am 08.10.:</b> <code>pytest</code> und <code>rtree</code> stehen jetzt in den requirements. Noch nicht drin: <code>manifold3d</code> für Stufe 5.</div>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 09 -->
+<article class="page" id="k9" data-title="Befunde">
+ <div class="inner">
+  <div class="num reveal">09</div><h2 class="reveal d1">Ehrliche Bestandesaufnahme</h2>
+  <div class="body one">
+   <div class="reveal">
+    <p class="lead">Stand nach dem Umbau vom 08.10. – was erledigt ist und was vor ZP1 (26.10.) noch offen ist.</p>
+    <table>
+     <tr><th>#</th><th>Befund</th><th>Wo</th><th>Status</th></tr>
+     <tr><td>1</td><td>Pipeline existierte doppelt (fertig im Skript, leer in core/).</td><td>scripts/, core/</td><td><span class="tag t-ok">✓ erledigt</span></td></tr>
+     <tr><td>2</td><td>Pyramiden auf dem Dach, Bauteile 1 Voxel zu dick, geschlossene Räume massiv.</td><td>core/huelle.py</td><td><span class="tag t-ok">✓ erledigt (Volumen-Voxel)</span></td></tr>
+     <tr><td>3</td><td>Laplace-Glättung rundete Kanten.</td><td>core/huelle.py</td><td><span class="tag t-ok">✓ entfernt</span></td></tr>
+     <tr><td>4</td><td>Wände doppelt trianguliert (IfcWall enthält IfcWallStandardCase).</td><td>core/ifc_modell.py</td><td><span class="tag t-ok">✓ erledigt</span></td></tr>
+     <tr><td>5</td><td>Konstanten doppelt (Skript vs. config.py); pytest fehlte in requirements.</td><td>diverse</td><td><span class="tag t-ok">✓ erledigt</span></td></tr>
+     <tr><td>6</td><td>Nur mit Mini-Testdatei geprüft. Laufzeit (jetzt 12 s statt 3 s!) und RAM mit NEST unbekannt; README-Messwerte leer.</td><td>testdaten/, README</td><td><span class="tag t-bad">✕ offen · hoch</span></td></tr>
+     <tr><td>7</td><td>Zwei Klassenlisten (Skript vs. Regelwerk).</td><td>Skript, regelwerk.py</td><td><span class="tag t-stub">offen · mittel</span></td></tr>
+     <tr><td>8</td><td>Bauteile &lt; 0.4 mm Modellmass verschwinden zufällig ganz oder teilweise; Dickenprüfung fehlt noch.</td><td>huelle, druckbarkeit</td><td><span class="tag t-stub">offen · mittel</span></td></tr>
+     <tr><td>9</td><td>Nicht geschlossene IFC-Bauteile werden übersprungen (im Testmodell: 0).</td><td>core/huelle.py</td><td><span class="tag t-stub">beobachten</span></td></tr>
+     <tr><td>10</td><td>Nummerierung M1–M6 widersprüchlich zwischen Docstrings und PLAN.</td><td>core/*.py, PLAN</td><td><span class="tag t-blue">offen · tief</span></td></tr>
+     <tr><td>11</td><td><code>Regelwerk({})</code> fällt auf Defaults zurück; PLAN beschreibt Regelwerk und Mindestdicke anders als der Code.</td><td>regelwerk.py, PLAN</td><td><span class="tag t-blue">offen · tief</span></td></tr>
+    </table>
+    <div class="merk">Die Pipeline ist jetzt <em>an einem Ort und korrekter</em> als vorher. Der grösste offene Punkt ist nicht der Code, sondern der Test mit dem echten NEST-Modell.</div>
+   </div>
+  </div>
+ </div>
+</article>
+
+<!-- 10 -->
+<article class="page" id="k10" data-title="Roadmap">
+ <div class="inner">
+  <div class="num reveal">10</div><h2 class="reveal d1">Wo es hingeht</h2>
+  <div class="body">
+   <div class="reveal">
+    <p>Die Ausbaustufen aus README und PLAN, mit den Modulen, die jeweils gefüllt werden müssen.</p>
+    <table>
+     <tr><th>Stufe</th><th>Inhalt</th><th>Füllt</th></tr>
+     <tr><td>0 <span class="tag t-ok">läuft</span></td><td>IFC → STL Machbarkeit, Go/No-Go 18.10.</td><td>Skript</td></tr>
+     <tr><td>1 · ZP1</td><td>Bauteiltabelle mit Dicke, Status, Regelwerk statt Klassenliste, Streamlit-Upload</td><td>ifc_modell, druckbarkeit, regelwerk, app</td></tr>
+     <tr><td>2</td><td>Regeln in SQLite, PDF-Report, Fenster-Toggle</td><td>regelwerk, <code>_parkiert/db/</code> zurückholen</td></tr>
+     <tr><td>3</td><td>Geschossweise schneiden, Zapfen, 3MF</td><td><code>_parkiert/core/</code> aufteilung, export zurückholen</td></tr>
+     <tr><td>4 opt.</td><td>3D-Vorschau mit Statusfarben</td><td>app</td></tr>
+     <tr><td>5 opt.</td><td>Boolesche Variante statt Voxel</td><td>neu (manifold3d)</td></tr>
+    </table>
+   </div>
+   <div class="reveal d2">
+    <p><b>Vorschlag für den nächsten Schritt</b> (kleinster Weg zu einer lauffähigen App):</p>
+    <ol>
+     <li><span class="tag t-ok">✓</span> Funktionen aus dem Skript nach <code>core/</code> verschoben, Konstanten aus <code>config.py</code>.</li>
+     <li>NEST-Datei laufen lassen, Laufzeit/RAM/Wasserdicht in README eintragen (Go/No-Go 18.10.).</li>
+     <li>In <code>bauteile_laden()</code> die minimale Dicke pro Bauteil ergänzen → <code>status_spalte_hinzufuegen()</code> → zu dünne Bauteile vor der Hülle aussortieren.</li>
+     <li>Klassenliste im Skript durch <code>Regelwerk.ist_behalten()</code> ersetzen.</li>
+     <li><code>app.py</code>: Upload → <code>IfcModell</code> → Tabelle → Button «STL erzeugen» → <code>st.download_button</code>.</li>
+    </ol>
+    <div class="anek">In der README ist schon ein Platz für <code>docs/stufe0_prusaslicer.png</code> reserviert – und das Bild ist seit heute Morgen (09:27) tatsächlich da. Die Messwert-Tabelle darunter ist aber noch leer.</div>
+   </div>
+  </div>
+ </div>
+</article>
+
+<section class="page" id="notizen" data-title="Notizen" data-nosearch>
+ <div class="inner">
+  <div class="num">✎</div><h2>Notizen <span class="muted" style="font-size:.5em">(<span id="nCount2">0</span>)</span></h2>
+  <div class="body one">
+   <div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+     <input class="filter" id="nFilter" type="search" placeholder="Notizen filtern" aria-label="Notizen filtern">
+     <button class="btn" data-exp>⤓ Exportieren</button><button class="btn" data-imp>⤒ Importieren</button>
+    </div>
+    <div class="ncards" id="nCards"></div>
+   </div>
+  </div>
+ </div>
+</section>
+</main>
+
+<button class="addnote" id="addNote">✎ Notiz hinzufügen</button>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-label="Notiz bearbeiten">
+ <div style="display:flex;justify-content:space-between;align-items:center"><b>Notiz</b><button class="btn" id="dClose" aria-label="Schliessen">×</button></div>
+ <blockquote id="dQuote"></blockquote>
+ <label for="dText" class="status">Deine Notiz</label>
+ <textarea id="dText"></textarea>
+ <div class="row"><button class="btn" id="dSave">Speichern</button><button class="btn" id="dCancel">Abbrechen</button><button class="btn" id="dDel">Löschen</button></div>
+ <b style="margin-top:10px">Alle Notizen</b>
+ <div class="ov" id="dOv"></div>
+ <div class="row" style="margin-top:auto"><button class="btn" data-exp>⤓ Exportieren</button><button class="btn" data-imp>⤒ Importieren</button></div>
+ <div class="status" id="dStatus"></div>
+ <input type="file" id="impFile" accept="application/json" hidden>
+</aside>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt=(x,d=3)=>{if(!isFinite(x))return'–';const a=Math.abs(x);let r=a===0?0:Number(x.toPrecision(d));return r.toLocaleString('de-CH',{maximumFractionDigits:6}).replace(/’/g,"'")};
+
+/* Theme */
+try{const t=localStorage.getItem('ifc2print-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
+$('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const n=cur==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('ifc2print-theme',n)}catch(e){}};
+
+/* TOC */
+const pages=$$('.page');const toc=$('#toc');
+pages.forEach((p,i)=>{const a=document.createElement('a');a.href='#'+p.id;const isN=p.id==='notizen';a.innerHTML=isN?'✎<span> Notizen</span>':String(i+1).padStart(2,'0')+'<span> '+p.dataset.title+'</span>';toc.appendChild(a)});
+const io2=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){$$('.toc a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))}}),{rootMargin:'-45% 0px -50% 0px'});
+pages.forEach(p=>io2.observe(p));
+
+/* Scroll */
+const layers=$$('.layer'),heroIn=$('#heroIn');let tk=false;
+function onS(){tk=false;const y=scrollY,h=document.documentElement.scrollHeight-innerHeight;$('#prog').style.width=(h>0?y/h*100:0)+'%';toc.classList.toggle('show',y>innerHeight*.6);
+ if(RM)return;layers.forEach(l=>l.style.transform='translateY('+(y*l.dataset.speed)+'px)');const p=Math.min(y/innerHeight,1);heroIn.style.transform='translateY('+(-80*p)+'px) scale('+(1-.12*p)+')';heroIn.style.opacity=Math.max(0,1-1.2*p)}
+addEventListener('scroll',()=>{if(!tk){tk=true;requestAnimationFrame(onS)}},{passive:true});onS();
+
+/* Reveal + Counter */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');e.target.querySelectorAll('[data-count]').forEach(countUp);io.unobserve(e.target)}}),{threshold:.15});
+$$('.reveal').forEach(r=>io.observe(r));
+function countUp(el){if(el.dataset.done)return;el.dataset.done=1;const t=+el.dataset.count;if(RM){el.textContent=t.toLocaleString('de-CH');return}const t0=performance.now();(function f(n){const k=Math.min((n-t0)/900,1);el.textContent=Math.round(t*(1-Math.pow(1-k,3))).toLocaleString('de-CH');if(k<1)requestAnimationFrame(f)})(t0)}
+
+/* Dateibaum */
+const files=[
+ ['README.md','doc','Projektbeschreibung, Ausbaustufen 0–5, Einrichtung, leere Messwert-Tabelle für Stufe 0 und Projektstruktur (inkl. _parkiert/).','Die Messwerte (Laufzeit, Voxelmatrix, RAM, Go/No-Go) sind noch «–».'],
+ ['PLAN.md','doc','Arbeitsplan mit Checklisten pro Stufe, Deadlines (Go/No-Go 18.10., ZP1 26.10.) und dem Klassifizierungsentscheid «IFC-Klassen statt eBKP-H».','Zwei inhaltliche Abweichungen zum Code (Regelwerk-Format, Mindestdicken-Formel) – siehe Kapitel 09.'],
+ ['requirements.txt','doc','Exakt gepinnte Paketliste (pip freeze). Seit 08.10. inkl. pytest und rtree.','Nach dem Update einmal pip install -r requirements.txt ausführen.'],
+ ['.gitignore','doc','Schliesst venv, output/, *.db, *.stl, *.3mf und Python-Caches aus dem Git-Repo aus.',''],
+ ['app.py','stub','Streamlit-Einstieg. Zeigt aktuell nur Titel und Info «UI folgt ab Stufe 1».','Start mit: streamlit run app.py'],
+ ['config.py','ok','Alle Zahlen zentral: Drucker MK4, Schwellwerte 0.8/1.2 mm, Voxel-Pitch, Massstab 50–1000, Zapfen, Bodenplatte, PLA. Wird jetzt auch vom Skript genutzt.','VOXEL_PITCH_MM wird aus MINDESTWAND_MM abgeleitet.'],
+ ['core/__init__.py','doc','Leer. Macht core/ zu einem importierbaren Python-Paket.',''],
+ ['core/ifc_modell.py','ok','Klasse IfcModell: öffnet IFC, bauteile_laden() (GUID, Klasse, Name, Geschoss), geschoss_fuer() und rohnetz_erzeugen() (dedupliziert, trianguliert, skaliert, liefert auch Einzelnetze).','Für Stufe 1 fehlen noch BBox und minimale Dicke pro Bauteil.'],
+ ['core/druckbarkeit.py','ok','modellmass(), druckbarkeits_status() (Ampel) und bauraum_pruefen() sind fertig und getestet. status_spalte_hinzufuegen() fehlt.',''],
+ ['core/regelwerk.py','ok','DEFAULT_REGELN (19 IFC-Klassen → Aktion) und Klasse Regelwerk mit aktion() und ist_behalten().','Wird vom Skript noch nicht benutzt.'],
+ ['core/huelle.py','ok','huelle_erzeugen(meshes, pitch): Volumen-Voxel per Mittelpunkt-Test → Nullrand → Marching Cubes → Normalen. Keine Glättung. Plus ist_wasserdicht().','Kern der Pipeline. Braucht rtree.'],
+ ['core/kalkulation.py','ok','Filamentgewicht, Kosten in CHF und geschätzte Druckzeit.','Fertig, aber nirgends aufgerufen – Rechner in Kapitel 07.'],
+ ['scripts/stufe0_machbarkeit.py','ok','Dünner Aufrufer (~60 Zeilen): ruft IfcModell und huelle_erzeugen auf, exportiert die STL, misst Laufzeiten.','Aus dem Projektordner starten: python scripts\\stufe0_machbarkeit.py'],
+ ['tests/test_druckbarkeit.py','ok','6 Tests: Ampel (1.5/1.0/0.3 mm), Massstab 20 m @1:200 = 100 mm, Bauraum passt/passt nicht.',''],
+ ['tests/test_regelwerk.py','ok','4 Tests: Tür entfernen, Wand behalten, unbekannte Klasse behalten, ist_behalten.',''],
+ ['testdaten/Building-Architecture-IFC2x3.ifc','doc','Testmodell (92 kB) aus den buildingSMART-Zertifizierungsdaten: 3 Aussenwände, 1 Installationswand (2 cm), Boden, 2 Dachplatten.','Die Giebelwände fehlen im IFC selbst. Platzhalter bis zur NEST-Datei.'],
+ ['IFC Testfiles/…','doc','Kompletter Zertifizierungsdatensatz (IFC2x3, IFC4, IFC4.3).','Gut für Robustheitstests über Schema-Versionen.'],
+ ['output/huelle_1_200.stl','doc','Die wasserdichte Voxel-Hülle (neue Methode: ~89 800 Dreiecke).','Wird bei jedem Skriptlauf überschrieben.'],
+ ['output/rohnetz.stl','doc','Rohe, nicht wasserdichte Geometrie 1:200 (188 Dreiecke).',''],
+ ['docs/IFC2Print_Code_Erklaerung.html','doc','Diese Seite.',''],
+ ['docs/vergleich_voxel_alt_neu.png','doc','Rendering alte vs. neue Voxel-Methode (Pyramiden).',''],
+ ['docs/stufe0_prusaslicer.png','doc','Screenshot der Hülle im PrusaSlicer, in der README eingebunden.','Zeigt noch die alte Methode – neu aufnehmen.'],
+ ['_parkiert/README.md','doc','Erklärt, was geparkt ist und wohin es zurückgehört.',''],
+ ['_parkiert/core/aufteilung.py','stub','Stufe 3: Geschosse schneiden, Steckzapfen setzen. Nur Signaturen.','Zurück nach core/ ab Stufe 3.'],
+ ['_parkiert/core/export.py','stub','als_stl_speichern() (Einzeiler) und 3MF-Gerüst.','Zurück nach core/ ab Stufe 3.'],
+ ['_parkiert/db/datenbank.py','stub','Klasse Datenbank: SQLite verbinden, Schema anlegen, schliessen.','Zurück nach db/ ab Stufe 2.'],
+ ['_parkiert/db/schema.sql','doc','4 Tabellen: drucker_profil, material, regel, exportlauf.',''],
+ ['_parkiert/db/seed/…','doc','material.csv (PLA), profile.csv (MK4), regeln.csv (2 Regelsets à 19 Zeilen).',''],
+ ['_parkiert/scripts/stufe0_machbarkeit_ORIGINAL.py','doc','Backup des Skripts vor dem Umbau.','Löschbar, sobald das neue Skript bei dir läuft.']
+];
+const tag={ok:'<span class="tag t-ok">läuft</span>',stub:'<span class="tag t-stub">Gerüst</span>',doc:'<span class="tag t-blue">Daten/Doku</span>'};
+const tree=$('#tree');let lastDir='';
+files.forEach((f,i)=>{const parts=f[0].split('/');const dir=parts.length>1?parts.slice(0,-1).join('/')+'/':'';if(dir!==lastDir&&dir){const d=document.createElement('div');d.textContent='📁 '+dir;d.style.color='var(--muted)';tree.appendChild(d);lastDir=dir}
+ const b=document.createElement('button');b.textContent=(dir?'   └ ':'')+parts.at(-1);b.style.whiteSpace='pre';b.setAttribute('aria-pressed','false');b.onclick=()=>show(i);const w=document.createElement('div');w.appendChild(b);w.insertAdjacentHTML('beforeend',' '+(f[1]==='ok'?'●':f[1]==='stub'?'○':''));tree.appendChild(w)});
+function show(i){const f=files[i];$$('#tree button').forEach((b,j)=>b.setAttribute('aria-pressed',j===i));$('#fileinfo').innerHTML='<h3>'+f[0]+'</h3>'+tag[f[1]]+'<p>'+f[2]+'</p>'+(f[3]?'<p class="muted">💡 '+f[3]+'</p>':'')}
+show(10);
+/* Suche indexiert auch Dateibaum */
+const hiddenIdx=document.createElement('div');hiddenIdx.hidden=true;hiddenIdx.id='fileIdx';files.forEach(f=>{const p=document.createElement('p');p.textContent=f[0]+': '+f[2]+' '+f[3];hiddenIdx.appendChild(p)});$('#k2 .body').appendChild(hiddenIdx);
+
+/* Schrittfolge */
+$$('[data-sn]').forEach(b=>b.onclick=()=>$('#steps').scrollBy({left:+b.dataset.sn*314,behavior:RM?'auto':'smooth'}));
+
+/* Voxel-Regler */
+function vox(){const w=+$('#wR').value,m=+$('#mR').value;$('#wV').textContent=w;$('#mV').textContent=m;const d=w/m,n=d/0.4;$('#wM').textContent=fmt(d);$('#wN').textContent=fmt(n,2);const s=d>=1.2?'✓ druckbar':d>=0.8?'! kritisch':'✕ nicht druckbar';const el=$('#wS');el.textContent=s;el.style.color=d>=1.2?'var(--ok)':d>=0.8?'var(--warn)':'var(--bad)';
+ const g=$('#voxG');const px=36,cols=10,rows=9,x0=40,y0=20;let h='';const wallPx=Math.min(n*px,cols*px);const wx=x0+(cols*px-wallPx)/2;
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const cx=x0+c*px,cy=y0+r*px;const ov=Math.max(0,Math.min(cx+px,wx+wallPx)-Math.max(cx,wx));const ctr=cx+px/2;const on=ctr>=wx&&ctr<=wx+wallPx;h+='<rect x="'+cx+'" y="'+cy+'" width="'+(px-2)+'" height="'+(px-2)+'" rx="4" fill="'+(on?'var(--accent-soft)':'var(--card)')+'" stroke="'+(on?'var(--accent)':'var(--line)')+'"/>'}
+ h+='<rect x="'+wx+'" y="'+y0+'" width="'+Math.max(wallPx,1)+'" height="'+rows*px+'" fill="none" stroke="var(--bad)" stroke-width="3"/>';
+ h+='<text x="'+(x0+cols*px/2)+'" y="'+(y0+rows*px+22)+'" text-anchor="middle" font-size="13" font-weight="700">'+fmt(d)+' mm ≈ '+fmt(n,2)+' Voxel</text>';g.innerHTML=h}
+$('#wR').oninput=vox;$('#mR').oninput=vox;vox();
+
+/* Formelrechner */
+function num(inp){const v=parseFloat(String(inp.value).replace(',','.').trim());const bad=!isFinite(v)||v<0;inp.setAttribute('aria-invalid',bad);return bad?null:v}
+function calc(id,fn){const el=$('#'+id);const ins=[...el.querySelectorAll('input[data-var]')];ins.forEach(i=>i.dataset.def=i.value);
+ const run=()=>{const v={};let ok=true;ins.forEach(i=>{const x=num(i);if(x===null)ok=false;v[i.dataset.var]=x});if(!ok){el.querySelector('.out').textContent='–';el.querySelector('.way').textContent='Bitte gültige, positive Zahlen eingeben (Komma oder Punkt).';return}fn(v,el)};
+ ins.forEach(i=>i.addEventListener('input',run));el.querySelector('[data-reset]').onclick=()=>{ins.forEach(i=>i.value=i.dataset.def);run()};run();el._run=run;return el}
+function setIn(id,v,val){const i=$('#'+id+' input[data-var="'+v+'"]');if(i&&document.activeElement!==i){i.value=val;$('#'+id)._run&&$('#'+id)._run()}}
+calc('cMass',(v,el)=>{if(v.m===0){el.querySelector('.out').textContent='–';el.querySelector('.way').textContent='M darf nicht 0 sein.';return}const d=v.d/v.m;el.querySelector('.out').textContent=fmt(d)+' mm';el.querySelector('.way').textContent='= '+fmt(v.d,6)+' / '+fmt(v.m,6)+' = '+fmt(d)+' mm';
+ const s=d>=1.2?['✓ druckbar','var(--ok)']:d>=0.8?['! kritisch','var(--warn)']:['✕ nicht_druckbar','var(--bad)'];el.querySelector('.rs').innerHTML='Status: <b style="color:'+s[1]+'">'+s[0]+'</b>';
+ const x=20+Math.min(d,2.2)/2.2*400;$('#ptr').setAttribute('transform','translate('+x+',56)');setIn('cBau','m',fmt(v.m,6).replace(/'/g,''))});
+calc('cBau',(v,el)=>{if(v.m===0){el.querySelector('.out').textContent='–';return}const x=v.x*1000/v.m,y=v.y*1000/v.m,z=v.z*1000/v.m;const ok=x<=250&&y<=210&&z<=220;el.querySelector('.out').innerHTML=(ok?'✓ passt':'✕ passt nicht')+' <span style="font-size:1rem;color:var(--muted)">'+fmt(x)+' × '+fmt(y)+' × '+fmt(z)+' mm</span>';el.querySelector('.out').style.color=ok?'var(--ok)':'var(--bad)';el.querySelector('.way').textContent='Umrechnung m → mm: ×1000, dann /'+fmt(v.m,6)+'. Bauraum MK4: 250 × 210 × 220 mm'+(ok?'':' → Stufe 3: geschossweise aufteilen');});
+calc('cFil',(v,el)=>{const m=v.v*v.f*v.r;el.querySelector('.out').textContent=fmt(m)+' g';el.querySelector('.way').textContent='= '+fmt(v.v,6)+' · '+fmt(v.f,6)+' · '+fmt(v.r,6)+' = '+fmt(m)+' g';setIn('cKost','g',String(Number(m.toPrecision(4))));setIn('cZeit','v',String(v.v));setIn('cZeit','f',String(v.f))});
+calc('cKost',(v,el)=>{const k=v.g/1000*v.p;el.querySelector('.out').textContent='CHF '+k.toFixed(2);el.querySelector('.way').textContent='= '+fmt(v.g,6)+' / 1000 · '+fmt(v.p,6)+' = '+k.toFixed(2)+' CHF'});
+calc('cZeit',(v,el)=>{if(v.q===0||v.l===0){el.querySelector('.out').textContent='–';el.querySelector('.way').textContent='Q und Layerhöhe dürfen nicht 0 sein.';return}const a=v.v*v.f/v.q,n=v.h/v.l,b=n*0.001,t=a+b;el.querySelector('.out').textContent=fmt(t)+' h ('+Math.floor(t)+' h '+Math.round((t%1)*60)+' min)';el.querySelector('.way').textContent='= '+fmt(v.v,6)+' · '+fmt(v.f,6)+' / '+fmt(v.q,6)+' + ('+fmt(v.h,6)+' / '+fmt(v.l,6)+') · 0.001 = '+fmt(a)+' + '+fmt(b)+' = '+fmt(t)+' h'});
+
+/* Suche */
+const norm=s=>s.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+let idx=[];function buildIdx(){idx=[];$$('.page:not([data-nosearch])').forEach((p,i)=>{const lab=String(i+1).padStart(2,'0')+' '+p.dataset.title;p.querySelectorAll('h2,p,li,td,summary,.formula,pre,.step,.merk,.anek,.note,h4').forEach(el=>{if(el.closest('svg'))return;const t=el.textContent.replace(/\s+/g,' ').trim();if(t.length>2)idx.push({lab,el,t,n:norm(t)})})});
+ notes.forEach(n=>idx.push({lab:'✎ Notizen',note:n,t:n.text+' — „'+n.quote+'“',n:norm(n.text+' '+n.quote)}))}
+const S=$('#search'),SI=$('#sIn'),SL=$('#sList');let sel=0,res=[];
+function openS(){S.classList.add('open');SI.value='';SL.innerHTML='';setTimeout(()=>SI.focus(),10)}
+function closeS(){S.classList.remove('open')}
+$('#sBtn').onclick=openS;S.onclick=e=>{if(e.target===S)closeS()};
+SI.oninput=()=>{const q=norm(SI.value.trim());SL.innerHTML='';sel=0;if(q.length<2)return;res=idx.filter(x=>x.n.includes(q)).slice(0,12);if(!res.length){SL.innerHTML='<li class="empty">Keine Treffer. Andere Schreibweise oder kürzeres Wort probieren.</li>';return}
+ res.forEach((r,i)=>{const li=document.createElement('li');li.id='sr'+i;li.setAttribute('role','option');const pos=r.n.indexOf(q);const st=Math.max(0,pos-40);let snip=r.t.slice(st,pos)+'<mark>'+r.t.slice(pos,pos+q.length)+'</mark>'+r.t.slice(pos+q.length,pos+q.length+80);li.innerHTML='<small>'+r.lab+'</small>'+(st?'…':'')+snip.replace(/<(?!\/?mark)/g,'&lt;');li.onclick=()=>go(i);SL.appendChild(li)});mark()};
+function mark(){[...SL.children].forEach((l,i)=>l.setAttribute('aria-selected',i===sel));SI.setAttribute('aria-activedescendant','sr'+sel);SL.children[sel]&&SL.children[sel].scrollIntoView({block:'nearest'})}
+function go(i){const r=res[i];closeS();if(r.note){jumpNote(r.note.id);return}const d=r.el.closest('details');if(d)d.open=true;flash(r.el.closest('#fileIdx')?$('#tree'):r.el)}
+function flash(el){const y=el.getBoundingClientRect().top+scrollY-140;scrollTo({top:y,behavior:RM?'auto':'smooth'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
+SI.onkeydown=e=>{if(e.key==='ArrowDown'){sel=Math.min(sel+1,res.length-1);mark();e.preventDefault()}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);mark();e.preventDefault()}else if(e.key==='Enter'&&res.length)go(sel)};
+addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openS()}else if(e.key==='/'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();openS()}else if(e.key==='Escape'){closeS();closeD()}});
+
+/* Notizen */
+const KEY='notes:dtprog-ifc2print-code';let notes=[],canStore=true;
+try{notes=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){canStore=false}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(notes));$('#dStatus').textContent='Gespeichert ('+notes.length+')'}catch(e){canStore=false;$('#dStatus').textContent='⚠ Speichern gesperrt – Notizen per Export sichern'}renderAll()}
+const add=$('#addNote');let pend=null,cur=null;
+document.addEventListener('mouseup',e=>{if(e.target===add)return;setTimeout(()=>{const s=getSelection();if(!s.rangeCount||s.isCollapsed){add.style.display='none';return}const r=s.getRangeAt(0);const sec=r.commonAncestorContainer.parentElement?.closest('.page');const anc=r.commonAncestorContainer.nodeType===1?r.commonAncestorContainer:r.commonAncestorContainer.parentElement;if(!sec||sec.id==='notizen'||anc.closest('svg,button,.num,.calc-f,input,.tree')){add.style.display='none';return}const q=s.toString().trim();if(q.length<2)return;const b=r.getBoundingClientRect();add.style.left=(b.left+b.width/2+scrollX)+'px';add.style.top=(b.top+scrollY)+'px';add.style.display='block';pend={range:r.cloneRange(),sec:sec.id,quote:q}},10)});
+add.onclick=()=>{if(!pend)return;const full=$('#'+pend.sec).textContent;const pre=prefixOf(pend.range);const n={id:'n'+Date.now(),section:pend.sec,quote:pend.quote,prefix:pre,text:'',created:new Date().toISOString(),updated:new Date().toISOString(),_new:true};wrap(pend.range,n.id);getSelection().removeAllRanges();add.style.display='none';openD(n)};
+function prefixOf(r){const pr=document.createRange();pr.selectNodeContents($('#'+pend.sec));pr.setEnd(r.startContainer,r.startOffset);return pr.toString().slice(-30)}
+function textNodes(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement.closest('svg,script,.num,button,input,textarea,.calc-f')?2:1});const a=[];let n;while(n=w.nextNode())a.push(n);return a}
+function wrap(range,id){const nodes=textNodes(range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement).filter(n=>range.intersectsNode(n));nodes.forEach(n=>{let s=n===range.startContainer?range.startOffset:0,e=n===range.endContainer?range.endOffset:n.length;if(e<=s)return;let t=n;if(s>0)t=t.splitText(s);if(e-s<t.length)t.splitText(e-s);const m=document.createElement('mark');m.className='note-hl';m.dataset.nid=id;m.tabIndex=0;t.parentNode.insertBefore(m,t);m.appendChild(t)})}
+function unwrap(id){$$('mark.note-hl[data-nid="'+id+'"]').forEach(m=>{m.replaceWith(...m.childNodes)});}
+function locate(n){const sec=$('#'+n.section);if(!sec)return false;const tns=textNodes(sec);let all='',map=[];tns.forEach(t=>{map.push([t,all.length]);all+=t.data});let pos=all.indexOf(n.prefix+n.quote);pos=pos<0?all.indexOf(n.quote):pos+n.prefix.length;if(pos<0)return false;const end=pos+n.quote.length;const r=document.createRange();for(const [t,o] of map){if(o<=pos&&pos<=o+t.length){r.setStart(t,pos-o);break}}for(const [t,o] of map){if(o<=end&&end<=o+t.length){r.setEnd(t,end-o);break}}wrap(r,n.id);return true}
+document.addEventListener('click',e=>{const m=e.target.closest('mark.note-hl');if(m){const n=notes.find(x=>x.id===m.dataset.nid);if(n)openD(n)}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('mark.note-hl'))e.target.click()});
+const D=$('#drawer');
+function openD(n){cur=n;$('#dQuote').textContent='„'+n.quote+'“';$('#dText').value=n.text;D.classList.add('open');setTimeout(()=>$('#dText').focus(),50);renderOv()}
+function closeD(){if(cur&&cur._new){unwrap(cur.id)}cur=null;D.classList.remove('open')}
+$('#dClose').onclick=closeD;$('#dCancel').onclick=closeD;
+$('#dSave').onclick=()=>{if(!cur)return;cur.text=$('#dText').value;cur.updated=new Date().toISOString();if(cur._new){delete cur._new;notes.push(cur)}cur=null;D.classList.remove('open');save()};
+$('#dDel').onclick=()=>{if(!cur)return;unwrap(cur.id);notes=notes.filter(n=>n.id!==cur.id);cur=null;D.classList.remove('open');save()};
+$('#nBtn').onclick=()=>{cur=null;$('#dQuote').textContent='Text in einem Kapitel markieren, um eine neue Notiz anzulegen.';$('#dText').value='';D.classList.add('open');renderOv()};
+const order=id=>pages.findIndex(p=>p.id===id);
+const secLab=id=>{const i=order(id);return String(i+1).padStart(2,'0')+' '+pages[i].dataset.title};
+function renderOv(){const o=$('#dOv');o.innerHTML=notes.length?'':'<span class="status">Noch keine Notizen.</span>';[...notes].sort((a,b)=>order(a.section)-order(b.section)).forEach(n=>{const a=document.createElement('a');a.href='#';a.innerHTML='<small style="color:var(--accent)">'+secLab(n.section)+'</small><br>'+esc(n.text||'(leer)');a.onclick=e=>{e.preventDefault();D.classList.remove('open');jumpNote(n.id)};o.appendChild(a)})}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function jumpNote(id){const m=$('mark.note-hl[data-nid="'+id+'"]');if(m)flash(m)}
+function renderCards(){const f=norm($('#nFilter').value||'');const c=$('#nCards');c.innerHTML='';const list=[...notes].sort((a,b)=>order(a.section)-order(b.section)).filter(n=>!f||norm(n.text+' '+n.quote).includes(f));
+ if(!notes.length){c.innerHTML='<p class="muted">Noch keine Notizen. Markiere irgendwo oben Text mit der Maus – dann erscheint «✎ Notiz hinzufügen». Notizen bleiben in diesem Browser gespeichert; mit Exportieren sicherst du sie als Datei.</p>';return}
+ list.forEach(n=>{const d=document.createElement('div');d.className='ncard';d.innerHTML='<small>'+secLab(n.section)+'</small><blockquote>„'+esc(n.quote)+'“</blockquote><p>'+esc(n.text||'(leer)')+'</p><p class="status">'+new Date(n.updated).toLocaleString('de-CH')+'</p>';const b1=document.createElement('button');b1.className='btn';b1.textContent='→ zur Stelle';b1.onclick=()=>jumpNote(n.id);const b2=document.createElement('button');b2.className='btn';b2.textContent='Bearbeiten';b2.onclick=()=>openD(n);d.append(b1,' ',b2);c.appendChild(d)})}
+$('#nFilter').oninput=renderCards;
+function renderAll(){$('#nCount').textContent=notes.length;$('#nCount2').textContent=notes.length;renderOv();renderCards();buildIdx()}
+$$('[data-exp]').forEach(b=>b.onclick=()=>{const blob=new Blob([JSON.stringify({key:KEY,notes},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='notizen-dtprog-ifc2print-code.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
+$$('[data-imp]').forEach(b=>b.onclick=()=>$('#impFile').click());
+$('#impFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(d.key!==KEY){alertS('Falsche Datei (anderer Schlüssel).');return}let k=0;(d.notes||[]).forEach(n=>{if(notes.some(x=>x.id===n.id))return;if(locate(n)){notes.push(n);k++}});save();alertS(k+' Notiz(en) importiert.')}catch(err){alertS('Datei nicht lesbar.')}e.target.value=''};
+function alertS(t){$('#dStatus').textContent=t;D.classList.add('open')}
+notes=notes.filter(locate);if(!canStore)$('#dStatus').textContent='⚠ Speichern gesperrt – Notizen per Export sichern';
+renderAll();
+})();
+</script>
+</body>
+</html>
