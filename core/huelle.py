@@ -4,11 +4,14 @@ Jedes Element wird mit method='subdivide' voxelisiert und anschliessend per
 binary_fill_holes EINZELN aufgefüllt: Wandhohlräume (Schalen) werden solid, Räume
 bleiben hohl (kein einzelnes Element umschliesst einen ganzen Raum). Kein
 binary_closing auf der Globalmatrix (füllt sonst ganze Ebenen/Räume auf).
-Parallelisierung via ProcessPoolExecutor über alle CPU-Kerne.
+Parallelisierung wählbar: Prozesse (CLI), Threads (Streamlit-sicher) oder
+sequenziell. Prozesse scheitern unter Streamlit/Windows am spawn-Reimport
+(BrokenProcessPool) → automatischer Fallback auf sequenziell.
 """
 
 import multiprocessing
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 
 import numpy as np
 import trimesh
@@ -33,9 +36,30 @@ def _voxelize_mesh(args: tuple) -> tuple[np.ndarray, np.ndarray]:
     return np.array(vox.transform[:3, 3]), filled
 
 
-def huelle_erzeugen(meshes: list[trimesh.Trimesh], pitch_mm: float) -> tuple[trimesh.Trimesh, dict]:
+def _voxelisiere_alle(args: list[tuple], parallel: str) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Voxelisiert alle Elemente im gewählten Modus und gibt die Ergebnisse als Liste zurück.
+
+    parallel: 'process' (CLI, schnell) | 'thread' (Streamlit-sicher) | 'none' (sequenziell).
+    Bei 'process' wird auf BrokenProcessPool (z.B. unter Streamlit) sequenziell wiederholt.
+    """
+    workers = max(1, multiprocessing.cpu_count() - 1)
+    if parallel == "process":
+        try:
+            with ProcessPoolExecutor(max_workers=workers) as ex:
+                return list(ex.map(_voxelize_mesh, args))
+        except BrokenProcessPool:
+            pass  # Fallback: sequenziell (siehe unten)
+    elif parallel == "thread":
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            return list(ex.map(_voxelize_mesh, args))
+    return [_voxelize_mesh(a) for a in args]
+
+
+def huelle_erzeugen(meshes: list[trimesh.Trimesh], pitch_mm: float,
+                    parallel: str = "process") -> tuple[trimesh.Trimesh, dict]:
     """Erzeugt aus den Einzelnetzen der Bauteile eine wasserdichte Voxel-Hülle.
 
+    parallel: 'process' (CLI), 'thread' (Streamlit-sicher) oder 'none'.
     Rückgabe: (Hülle, Info-Dict mit voxelmatrix, gefuellte_voxel, ram_mb, nicht_dicht).
     """
     alle = trimesh.util.concatenate(meshes)
@@ -49,16 +73,14 @@ def huelle_erzeugen(meshes: list[trimesh.Trimesh], pitch_mm: float) -> tuple[tri
     matrix = np.zeros(shape, dtype=bool)
 
     args = [(m.vertices, m.faces, pitch_mm) for m in meshes]
-    workers = max(1, multiprocessing.cpu_count() - 1)
-    with ProcessPoolExecutor(max_workers=workers) as ex:
-        for vox_origin, vox_matrix in ex.map(_voxelize_mesh, args):
-            offset = np.round((vox_origin - (unten + pitch_mm / 2)) / pitch_mm).astype(int)
-            idx = np.array(np.where(vox_matrix)).T
-            global_idx = idx + offset
-            valid = np.all((global_idx >= 0) & (global_idx < shape), axis=1)
-            g = global_idx[valid]
-            if len(g):
-                matrix[g[:, 0], g[:, 1], g[:, 2]] = True
+    for vox_origin, vox_matrix in _voxelisiere_alle(args, parallel):
+        offset = np.round((vox_origin - (unten + pitch_mm / 2)) / pitch_mm).astype(int)
+        idx = np.array(np.where(vox_matrix)).T
+        global_idx = idx + offset
+        valid = np.all((global_idx >= 0) & (global_idx < shape), axis=1)
+        g = global_idx[valid]
+        if len(g):
+            matrix[g[:, 0], g[:, 1], g[:, 2]] = True
 
     # KEIN binary_closing: Das 3D-Closing überbrückt eng benachbarte horizontale
     # Flächen (Platten-Ober-/Unterseiten, Simse) und erzeugte dadurch komplett

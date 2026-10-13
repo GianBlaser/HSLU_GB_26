@@ -47,7 +47,8 @@ def erzeuge_stl(_ifc: IfcModell, file_hash: str, massstab: int,
                 klassen: tuple[str, ...]) -> tuple[bytes, bool]:
     """Erzeugt die wasserdichte Voxel-Hülle und gibt (STL-Bytes, wasserdicht) zurück."""
     _, meshes, _ = _ifc.rohnetz_erzeugen(set(klassen), massstab)
-    huelle, _, _, _ = huelle_erzeugen(meshes, VOXEL_PITCH_MM)
+    # Threads statt Prozesse: ProcessPool scheitert unter Streamlit/Windows am spawn-Reimport.
+    huelle, _, _, _ = huelle_erzeugen(meshes, VOXEL_PITCH_MM, parallel="thread")
     return huelle.export(file_type="stl"), bool(huelle.is_watertight)
 
 
